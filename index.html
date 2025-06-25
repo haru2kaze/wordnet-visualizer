@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <title>日本語WordNetネットワーク可視化</title>
+  <script src="https://unpkg.com/cytoscape/dist/cytoscape.min.js"></script>
+</head>
+<body>
+  <h1>日本語WordNet：語の意味関係ネットワーク</h1>
+  <input type="text" id="wordInput" placeholder="英単語を入力（例: impact）" />
+  <button onclick="search()">検索</button>
+  <div id="cy" style="width:90vw; height:80vh; border:1px solid #ccc; margin-top:10px;"></div>
+
+  <script>
+    let cy;
+    function search() {
+      const w = document.getElementById('wordInput').value;
+      fetch(`http://localhost:5000/api/related?word=${w}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.error) {
+            alert('エラー: ' + data.error);
+            return;
+          }
+          cy && cy.destroy();
+          const elements = [];
+          data.nodes.forEach(n => elements.push({ data: n }));
+          data.links.forEach(l => elements.push({ data: l }));
+
+          cy = cytoscape({
+            container: document.getElementById('cy'),
+            elements: elements,
+            style: [
+              {
+                selector: 'node',
+                style: {
+                  'label': 'data(label)',
+                  'text-valign': 'center',
+                  'text-halign': 'center',
+                  'background-color': 'data(color)',
+                  'font-size': 'mapData(group, 0, 3, 12, 18)',
+                  'width': 'mapData(group, 0, 3, 40, 80)',
+                  'height': 'mapData(group, 0, 3, 40, 80)',
+                  'text-wrap': 'wrap',
+                  'text-max-width': 150
+                }
+              },
+              {
+                selector: 'edge',
+                style: {
+                  'width': 2,
+                  'line-color': '#aaa',
+                  'target-arrow-shape': 'triangle',
+                  'target-arrow-color': '#aaa',
+                  'curve-style': 'bezier'
+                }
+              }
+            ],
+            layout: {
+              name: 'cose',
+              animate: true,
+              idealEdgeLength: 150,
+              nodeRepulsion: 8000,
+              gravity: 0.25
+            }
+          });
+        })
+        .catch(e => {
+          alert('通信エラーが発生しました：' + e.message);
+        });
+    }
+  </script>
+</body>
+</html>
