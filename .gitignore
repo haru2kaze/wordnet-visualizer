@@ -11,3 +11,4 @@ __pycache__/
 
 # .gitignore の末尾に追加
 wnjpn.db
+.idea/
